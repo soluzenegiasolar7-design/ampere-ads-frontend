@@ -2,8 +2,8 @@ const API = 'https://ampere-ads-dashboard.onrender.com/api';
 
 let chartDaily, chartRoas;
 
-async function fetchJSON(url) {
-  const r = await fetch(url);
+async function fetchJSON(url, options) {
+  const r = await fetch(url, options);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
@@ -166,6 +166,31 @@ document.getElementById('btn-collect').addEventListener('click', async () => {
   await fetch(`${API}/collect`, { method: 'POST' }).catch(() => {});
   await load();
   btn.textContent = '▶ Coletar agora';
+  btn.disabled = false;
+});
+
+document.getElementById('btn-analyze').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-analyze');
+  const result = document.getElementById('ai-result');
+  const days = document.getElementById('days').value;
+
+  btn.textContent = '⏳ Analisando...';
+  btn.disabled = true;
+  result.classList.remove('hidden');
+  result.innerHTML = '<div class="ai-loading">Consultando IA, aguarde alguns segundos...</div>';
+
+  try {
+    const data = await fetchJSON(`${API}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ days }),
+    });
+    result.textContent = data.analysis;
+  } catch (e) {
+    result.textContent = `Erro ao consultar IA: ${e.message}`;
+  }
+
+  btn.textContent = '✨ Analisar campanhas';
   btn.disabled = false;
 });
 
