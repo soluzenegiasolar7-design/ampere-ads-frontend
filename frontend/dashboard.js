@@ -33,9 +33,10 @@ async function loadMetrics(days) {
   // Agrupa por data para o gráfico diário
   const byDate = {};
   rows.forEach(r => {
-    if (!byDate[r.date]) byDate[r.date] = { spend: 0, leads: 0 };
-    byDate[r.date].spend += parseFloat(r.spend || 0);
-    byDate[r.date].leads += parseInt(r.leads || 0);
+    const day = r.date.slice(0, 10);
+    if (!byDate[day]) byDate[day] = { spend: 0, leads: 0 };
+    byDate[day].spend += parseFloat(r.spend || 0);
+    byDate[day].leads += parseInt(r.leads || 0);
   });
   const dates = Object.keys(byDate).sort();
   renderDailyChart(dates, dates.map(d => byDate[d].spend), dates.map(d => byDate[d].leads));
