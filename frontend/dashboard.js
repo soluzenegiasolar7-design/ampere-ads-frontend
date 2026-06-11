@@ -2,13 +2,23 @@ const API = 'https://ampere-ads-dashboard.onrender.com/api';
 
 let chartDaily, chartRoas;
 
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
 async function load() {
   const days = document.getElementById('days').value;
-  await Promise.all([loadSummary(days), loadMetrics(days), loadAlerts()]);
+  await Promise.all([
+    loadSummary(days).catch(e => console.error('summary:', e.message)),
+    loadMetrics(days).catch(e => console.error('metrics:', e.message)),
+    loadAlerts().catch(e => console.error('alerts:', e.message)),
+  ]);
 }
 
 async function loadSummary(days) {
-  const data = await fetch(`${API}/summary?days=${days}`).then(r => r.json());
+  const data = await fetchJSON(`${API}/summary?days=${days}`);
   document.getElementById('total-spend').textContent = `R$ ${fmt(data.total_spend)}`;
   document.getElementById('total-leads').textContent = data.total_leads ?? '—';
   document.getElementById('total-conv').textContent = data.total_conversions ?? '—';
@@ -18,7 +28,7 @@ async function loadSummary(days) {
 }
 
 async function loadMetrics(days) {
-  const rows = await fetch(`${API}/metrics?days=${days}`).then(r => r.json());
+  const rows = await fetchJSON(`${API}/metrics?days=${days}`);
 
   // Agrupa por data para o gráfico diário
   const byDate = {};
@@ -49,7 +59,7 @@ async function loadMetrics(days) {
 }
 
 async function loadAlerts() {
-  const alerts = await fetch(`${API}/alerts`).then(r => r.json());
+  const alerts = await fetchJSON(`${API}/alerts`);
   const list = document.getElementById('alerts-list');
   if (!alerts.length) { list.innerHTML = '<li style="color:#64748b">Nenhum alerta recente.</li>'; return; }
   list.innerHTML = alerts.slice(0, 10).map(a =>
@@ -152,7 +162,7 @@ document.getElementById('btn-collect').addEventListener('click', async () => {
   const btn = document.getElementById('btn-collect');
   btn.textContent = 'Coletando...';
   btn.disabled = true;
-  await fetch(`${API}/collect`, { method: 'POST' });
+  await fetch(`${API}/collect`, { method: 'POST' }).catch(() => {});
   await load();
   btn.textContent = '▶ Coletar agora';
   btn.disabled = false;
